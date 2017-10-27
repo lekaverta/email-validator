@@ -122,9 +122,3 @@ class EmailValidator:
         self.session.write(('RCPT TO: <{}>'.format(email.endereco)).encode(self.encode) + self.wordwrap)
         check = self.session.read_until(self.endprocessmark, self.timeout)
         email.set_status(check[0:3])
-
-email_file = EmailsFile('/src/extensions/email_validator/arquivo.csv')
-for emails in email_file.emails:
-    validator = EmailValidator(emails, emails[0].get_domain())
-    validator.validate_all()
-email_file.refresh()
