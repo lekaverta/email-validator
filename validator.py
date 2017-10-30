@@ -4,6 +4,8 @@
 import telnetlib
 import time
 import dns.resolver
+import csv
+from itertools import groupby
 
 class Email:
     valido = None
@@ -38,22 +40,42 @@ class Email:
 
 class EmailsFile:
     emails = []
+    indexEmail = -1
+    path = None
+    emailColumn = None
 
-    #TODO: Load from path (.csv)
-    def __init__(self, path):
-        self.emails = [
-            [
-                Email('thais.mf20@gmail.com'),
-                Email('pthomaz7@gmail.com'),
-                Email('alinemoraes1995@gmail.com'),
-                Email('tesdgsgds123421@gmail.com')
-            ],
-            [
-                Email('leticia.verta@b2egroup.com.br'),
-                Email('rodrigo.sansao@b2egroup.com.br'),
-                Email('testestests@b2egroup.com.br')
-            ]
-        ];
+    def __init__(self, path, column):
+        self.path = path
+        self.emailColumn = column
+        self._get_emails_from_file()
+        self._group_emails_by_domain()
+    
+    def _get_emails_from_file(self):
+        cont = 0
+
+        with open(self.path, 'rb') as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+            for row in spamreader:
+                if cont == 0:
+                    self._get_email_index(row)
+                elif self.indexEmail >= 0:
+                    self.emails.append(Email(row[self.indexEmail]))
+                
+                cont += 1
+            
+    def _get_email_index(self, row):
+        for index, column in enumerate(row):
+            if (column == self.emailColumn):
+                self.indexEmail = index
+
+    def _group_emails_by_domain(self):
+        emailsOrdered = []
+        self.emails = sorted(self.emails, key = lambda e: e.endereco.lower().split('@')[1])
+
+        for key, group in groupby(self.emails, key = lambda e: e.endereco.lower().split('@')[1]):
+            emailsOrdered.append(list(group))  
+
+        self.emails = emailsOrdered
 
     #TODO: Write file result with status and code (.csv)
     def refresh(self):
